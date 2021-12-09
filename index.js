@@ -38,7 +38,7 @@ app.post('/auth/signup', async (req, res) => {
         const token = jwt.sign({ user_id: user._id, }, JWT_SECRETKEY)
 
         res.status(201).send({
-            message: "created user and user Account successfully",
+            message: "created user successfully",
             data: {
                 token,
                 email: user.email,
@@ -90,7 +90,7 @@ app.patch('/accont/deposit', async (req, res) => {
 
     try {
         const acct = await Account.findById(userId)
-        if(!acct.Acc_isActive) res.status(400).send({message: "account is deactivated"})
+        if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
 
         const newBalance = await Account.findByIdAndUpdate(userId,
@@ -113,7 +113,7 @@ app.patch('/accont/withdraw', async (req, res) => {
 
     try {
         const acct = await Account.findById(userId)
-        if(!acct.Acc_isActive) res.status(400).send({message: "account is deactivated"})
+        if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
 
         const newBalance = await Account.findByIdAndUpdate(userId,
@@ -128,6 +128,18 @@ app.patch('/accont/withdraw', async (req, res) => {
     } catch (error) {
         res.status(400).send({ message: "couldn't deposit", error })
     }
+})
+
+app.patch('/account/transfer', (req, res) => {
+    const data = req.body
+    const userId = data.userId
+
+    try{
+
+    }catch(error){
+
+    }
+
 })
 
 
