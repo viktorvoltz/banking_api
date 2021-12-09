@@ -90,6 +90,7 @@ app.patch('/accont/deposit', async (req, res) => {
 
     try {
         const acct = await Account.findById(userId)
+        if(!acct.Acc_isActive) res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
 
         const newBalance = await Account.findByIdAndUpdate(userId,
@@ -101,6 +102,29 @@ app.patch('/accont/deposit', async (req, res) => {
             { new: true }
         )
         res.status(200).send({ message: "deposit recieved", data: newBalance })
+    } catch (error) {
+        res.status(400).send({ message: "couldn't deposit", error })
+    }
+})
+
+app.patch('/accont/withdraw', async (req, res) => {
+    const data = req.body
+    const userId = data.userId
+
+    try {
+        const acct = await Account.findById(userId)
+        if(!acct.Acc_isActive) res.status(400).send({message: "account is deactivated"})
+        if (!acct) return res.status(400).send({ message: "user account does not exist" })
+
+        const newBalance = await Account.findByIdAndUpdate(userId,
+            {
+                $set: {
+                    account_balance: acct.account_balance -= data.account_balance
+                }
+            },
+            { new: true }
+        )
+        res.status(200).send({ message: "debit: money withdrawn", data: newBalance })
     } catch (error) {
         res.status(400).send({ message: "couldn't deposit", error })
     }
