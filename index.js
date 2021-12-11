@@ -101,9 +101,9 @@ app.patch('/accont/deposit', async (req, res) => {
             amount: data.account_balance,
         }).save()
 
-        const transaction = await Transaction.findOne({user_id: acct.userId});
+        //const transaction = await Transaction.findOne({user_id: acct.userId});
 
-        const user = await User.findOne().populate('transactions');
+        const user = await User.findOne({_id: acct.userId}).populate('transactions');
         console.log(user.transactions)
 
         const newBalance = await Account.findByIdAndUpdate(userId,
