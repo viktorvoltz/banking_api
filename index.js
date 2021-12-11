@@ -132,18 +132,18 @@ app.patch('/accont/withdraw', async (req, res) => {
 
 app.patch('/account/transfer/:otherID', async (req, res) => {
     const data = req.body
-    const userId = data.userId
+    const userId = data._id
 
     try{
-        const userAcct = await Account.findOne({_id: userId})
-        const acct = await Account.findOne({_id: req.params.otherID})
+        const userAcct = await Account.findOne({_id: req.params.otherID})
+        const acct = await Account.findOne({_id: userId})
         if(!acct.Acc_isActive) return res.status(400).send({message: "soryy, the account is deactivated"})
         if (!acct) return res.status(400).send({ message: "The account does not exist" })
 
         //userAcct.account_balance -=  data.account_balance;
 
 
-        const newUserBalance = await Account.findByIdAndUpdate(userId, 
+        const newUserBalance = await Account.findByIdAndUpdate(req.params.otherID, 
             {
                 $set: {
                     account_balance: userAcct.account_balance -= data.account_balance
@@ -152,7 +152,7 @@ app.patch('/account/transfer/:otherID', async (req, res) => {
             {new: true}
             )
 
-        const newBalance = await Account.findByIdAndUpdate(req.params.otherID,
+        const newBalance = await Account.findByIdAndUpdate(userId,
             {
                 $set: {
                     account_balance: acct.account_balance += data.account_balance
