@@ -130,6 +130,15 @@ app.patch('/accont/withdraw', async (req, res) => {
         if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
 
+        const withdrawTransaction = await new Transaction({
+            user_id: acct.userId,
+            type: "Withdraw",
+            amount: data.account_balance,
+        }).save()
+
+        const user = await User.findOne({_id: acct.userId}).populate('transactions');
+        console.log(user.transactions)
+
         const newBalance = await Account.findByIdAndUpdate(userId,
             {
                 $set: {
@@ -138,7 +147,7 @@ app.patch('/accont/withdraw', async (req, res) => {
             },
             { new: true }
         )
-        res.status(200).send({ message: "debit: money withdrawn", data: newBalance })
+        res.status(200).send({ message: "debit: money withdrawn", data: {newBalance, user}})
     } catch (error) {
         res.status(400).send({ message: "couldn't deposit", error })
     }
@@ -153,6 +162,17 @@ app.patch('/account/transfer/:otherID', async (req, res) => {
         const acct = await Account.findOne({_id: userId})
         if(!acct.Acc_isActive) return res.status(400).send({message: "soryy, the account is deactivated"})
         if (!acct) return res.status(400).send({ message: "The account does not exist" })
+
+        const transferTransaction = await new Transaction({
+            user_id: userAcct.userId,
+            from: req.params.otherID,
+            to: userId,
+            type: "Transfer",
+            amount: data.account_balance,
+        }).save()
+
+        const user = await User.findOne({_id: userAcct.userId}).populate('transactions');
+        console.log(user.transactions)
 
         //userAcct.account_balance -=  data.account_balance;
 
