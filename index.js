@@ -5,6 +5,7 @@ const bcrypt = require('bcrypt')
 const jwt = require("jsonwebtoken");
 const User = require("./models/user.js");
 const Account = require("./models/account.js");
+const Transaction = require("./models/transaction.js");
 const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
 
 const app = express()
@@ -89,9 +90,21 @@ app.patch('/accont/deposit', async (req, res) => {
     const userId = data.userId
 
     try {
+        //const user = await User.findOne({_id: userId})
         const acct = await Account.findById(userId)
         if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
+
+        const depositTransaction = await new Transaction({
+            user_id: acct.userId,
+            type: "Deposit",
+            amount: data.account_balance,
+        }).save()
+
+        const transaction = await Transaction.findOne({user_id: acct.userId});
+
+        const user = await User.findOne().populate('transactions');
+        console.log(user.transactions)
 
         const newBalance = await Account.findByIdAndUpdate(userId,
             {
@@ -101,9 +114,10 @@ app.patch('/accont/deposit', async (req, res) => {
             },
             { new: true }
         )
-        res.status(200).send({ message: "deposit recieved", data: newBalance })
+        res.status(200).send({ message: "deposit recieved", data: {newBalance, user} })
     } catch (error) {
         res.status(400).send({ message: "couldn't deposit", error })
+        console.log(error)
     }
 })
 

@@ -19,6 +19,12 @@ const userSchema = new Schema({
         type: Boolean,
         required: true
     }
+});
+
+userSchema.virtual('transactions', {
+    ref: 'transaction', 
+    localField: '_id',
+    foreignField: 'user_id'
 })
 
 module.exports= mongoose.model("user_Acc", userSchema);
