@@ -165,7 +165,7 @@ app.patch('/account/transfer/:otherID', async (req, res) => {
 
         const transferTransaction = await new Transaction({
             user_id: userAcct.userId,
-            from: req.params.otherID,
+            from: `you -${req.params.otherID}`,
             to: userId,
             type: "Transfer",
             amount: data.account_balance,
@@ -200,6 +200,21 @@ app.patch('/account/transfer/:otherID', async (req, res) => {
         console.log(error)
     }
 
+})
+
+app.post('/transaction-records', async (req, res) => {
+    const data = req.body
+    const userId = data._id
+
+    try{
+        const user = await User.findOne({_id: userId}).populate('transactions');
+        console.log(user.transactions)
+
+        res.status(200).send({message: "Transactions", data: user.transactions});
+    }catch(error){
+        res.status(400).send({message: "couldn't get transactions", data: error})
+        console.log(error)
+    }
 })
 
 
