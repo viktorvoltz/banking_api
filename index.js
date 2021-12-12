@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/user.js");
 const Account = require("./models/account.js");
 const Transaction = require("./models/transaction.js");
+const Admin = require("./models/admin.js");
 const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
 
 const app = express()
@@ -53,6 +54,31 @@ app.post('/auth/signup', async (req, res) => {
     }
 })
 
+app.post('/auth/signin', async(req, res) => {
+    const data = req.body
+
+    try {
+        const user = await User.findOne({ email: data.email })
+        if (!user) return res.status(400).send({ message: "Invalid email or password" })
+        const isValidPassword = await bcrypt.compare(data.password, user.password)
+        if (!isValidPassword) return res.status(400).send({ message: "Invalid email or password" })
+    
+        const token = jwt.sign({ user_id: user._id }, JWT_SECRETKEY)
+    
+        res.status(200).send({
+          message: "Login successful",
+          data: {
+            token,
+            user_id: user._id,
+            email: user.email,
+            full_name: user.full_name
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        res.status(400).send({ message: "Unable to Login", error })
+      }
+})
 
 app.post('/account/create', async (req, res) => {
 
@@ -85,7 +111,7 @@ app.post('/account/create', async (req, res) => {
 
 })
 
-app.patch('/accont/deposit', async (req, res) => {
+app.patch('/account/deposit', async (req, res) => {
     const data = req.body
     const userId = data.userId
 
@@ -121,7 +147,7 @@ app.patch('/accont/deposit', async (req, res) => {
     }
 })
 
-app.patch('/accont/withdraw', async (req, res) => {
+app.patch('/account/withdraw', async (req, res) => {
     const data = req.body
     const userId = data.userId
 
@@ -217,6 +243,57 @@ app.post('/transaction-records', async (req, res) => {
     }
 })
 
+app.post('/admin/signup', async (req, res) => {
+    const data = req.body
+
+    try {
+        const hashedPassword = await bcrypt.hash(data.password, 10)
+        const admin = await new Admin({
+            email: data.email,
+            password: hashedPassword,
+            isAdmin: true
+        }).save()
+
+        const token = jwt.sign({ admin_id: admin._id, }, JWT_SECRETKEY)
+
+        res.status(201).send({
+            message: "ADMIN created successfully",
+            data: {
+                token,
+                email: admin.email,
+                admin_id: admin._id,
+            }
+        })
+    } catch (error) {
+        res.status(400).send({ message: "ADMIN was not created", data: error })
+        console.log(error)
+    }
+})
+
+app.post('/admin/signin', async (req, res) => {
+    const data = req.body
+
+    try {
+        const admin = await Admin.findOne({ email: data.email })
+        if (!admin) return res.status(400).send({ message: "Invalid email or password" })
+        const isValidPassword = await bcrypt.compare(data.password, admin.password)
+        if (!isValidPassword) return res.status(400).send({ message: "Invalid email or password" })
+    
+        const token = jwt.sign({ admin_id: admin._id }, JWT_SECRETKEY)
+    
+        res.status(200).send({
+          message: "ADMIN LOGIN",
+          data: {
+            token,
+            admin_id: admin._id,
+            email: admin.email,
+          }
+        })
+      } catch (error) {
+        console.log(error)
+        res.status(400).send({ message: "Unable to signin as Admin", error })
+      }
+})
 
 
 
