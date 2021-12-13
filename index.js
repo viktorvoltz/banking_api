@@ -7,6 +7,7 @@ const User = require("./models/user.js");
 const Account = require("./models/account.js");
 const Transaction = require("./models/transaction.js");
 const Admin = require("./models/admin.js");
+const auth = require('./middleware/auth.js');
 const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
 
 const app = express()
@@ -37,7 +38,7 @@ app.post('/auth/signup', async (req, res) => {
             isAdmin: false
         }).save()
 
-        const token = jwt.sign({ user_id: user._id, }, JWT_SECRETKEY)
+        const token = jwt.sign({ userId: user._id, }, JWT_SECRETKEY)
 
         res.status(201).send({
             message: "created user successfully",
@@ -45,7 +46,7 @@ app.post('/auth/signup', async (req, res) => {
                 token,
                 email: user.email,
                 full_name: user.full_name,
-                user_id: user._id,
+                userId: user._id,
             }
         })
     } catch (error) {
@@ -63,13 +64,13 @@ app.post('/auth/signin', async(req, res) => {
         const isValidPassword = await bcrypt.compare(data.password, user.password)
         if (!isValidPassword) return res.status(400).send({ message: "Invalid email or password" })
     
-        const token = jwt.sign({ user_id: user._id }, JWT_SECRETKEY)
+        const token = jwt.sign({ userId: user._id }, JWT_SECRETKEY)
     
         res.status(200).send({
           message: "Login successful",
           data: {
             token,
-            user_id: user._id,
+            userId: user._id,
             email: user.email,
             full_name: user.full_name
           }
@@ -80,7 +81,7 @@ app.post('/auth/signin', async(req, res) => {
       }
 })
 
-app.post('/account/create', async (req, res) => {
+app.post('/account/create', auth(), async (req, res) => {
 
     const generateRandomString = (stringLength) => {
         //stringLength = 10;
@@ -96,7 +97,7 @@ app.post('/account/create', async (req, res) => {
 
     try {
         const account = await new Account({
-            userId: data.userId,
+            userId: req.USER_ID,
             account_number: generateRandomString(10),
             account_name: data.account_name,
             account_pin: data.account_pin,
@@ -111,15 +112,18 @@ app.post('/account/create', async (req, res) => {
 
 })
 
-app.patch('/account/deposit', async (req, res) => {
+app.patch('/account/deposit/:_id', auth(), async (req, res) => {
     const data = req.body
-    const userId = data.userId
 
     try {
-        //const user = await User.findOne({_id: userId})
-        const acct = await Account.findById(userId)
-        if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
-        if (!acct) return res.status(400).send({ message: "user account does not exist" })
+        const acct = await Account.findOne({_id: req.params._id})
+        acctuserid = '';   //for some reason javascript wouldn't check two alphanumeric, so i had to stringify my token and id
+        requserid = '';
+        acctuserid += acct.userId;
+        requserid += req.USER_ID;
+        if (acctuserid != requserid) return res.status(403).send({ message: "You can't deposit to this account" });
+        if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"});
+        if (!acct) return res.status(400).send({ message: "user account does not exist" });
 
         const depositTransaction = await new Transaction({
             user_id: acct.userId,
@@ -132,7 +136,7 @@ app.patch('/account/deposit', async (req, res) => {
         const user = await User.findOne({_id: acct.userId}).populate('transactions');
         console.log(user.transactions)
 
-        const newBalance = await Account.findByIdAndUpdate(userId,
+        const newBalance = await Account.findByIdAndUpdate(req.params._id,
             {
                 $set: {
                     account_balance: acct.account_balance += data.account_balance
@@ -147,12 +151,16 @@ app.patch('/account/deposit', async (req, res) => {
     }
 })
 
-app.patch('/account/withdraw', async (req, res) => {
+app.patch('/account/withdraw/:_id', auth(), async (req, res) => {
     const data = req.body
-    const userId = data.userId
 
     try {
-        const acct = await Account.findById(userId)
+        const acct = await Account.findOne({_id: req.params._id})
+        acctuserid = '';   //for some reason javascript wouldn't check two alphanumeric, so i had to stringify my token and id
+        requserid = '';
+        acctuserid += acct.userId;
+        requserid += req.USER_ID;
+        if (acctuserid != requserid) return res.status(403).send({ message: "You can't withdraw from this account" });
         if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
 
@@ -165,7 +173,7 @@ app.patch('/account/withdraw', async (req, res) => {
         const user = await User.findOne({_id: acct.userId}).populate('transactions');
         console.log(user.transactions)
 
-        const newBalance = await Account.findByIdAndUpdate(userId,
+        const newBalance = await Account.findByIdAndUpdate(req.params._id,
             {
                 $set: {
                     account_balance: acct.account_balance -= data.account_balance
@@ -294,6 +302,51 @@ app.post('/admin/signin', async (req, res) => {
         res.status(400).send({ message: "Unable to signin as Admin", error })
       }
 })
+
+app.post('/admin/create-user', async (req, res) => {
+    const data = req.body
+
+    try {
+        const hashedPassword = await bcrypt.hash(data.password, 10)
+        const user = await new User({
+            email: data.email,
+            password: hashedPassword,
+            full_name: data.full_name,
+            isAdmin: false
+        }).save()
+
+        const token = jwt.sign({ user_id: user._id, }, JWT_SECRETKEY)
+
+        res.status(201).send({
+            message: "created user successfully",
+            data: {
+                token,
+                email: user.email,
+                full_name: user.full_name,
+                user_id: user._id,
+            }
+        })
+    } catch (error) {
+        res.status(400).send({ message: "user was not created", data: error })
+        console.log(error)
+    }
+})
+
+app.delete('/admin/delete-user/:userId', async (req, res) => {
+    //data = req.body
+
+    try{
+        const user = await User.findOne({_id: req.params.userId});
+        if(!user) return res.status(403).send({message: "user does not exist"});
+        await User.findByIdAndDelete(req.params.userId);
+
+        res.status(200).send({message: "user has been deleted", data: user});
+    }catch(error){
+        res.status(400).send({message: "user was not deleter", data: error});
+        console.log(error)
+    }
+})
+
 
 
 
