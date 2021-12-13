@@ -4,6 +4,7 @@ const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
 const Admin = require("./../models/admin.js")
 const Transaction = require("./../models/transaction.js")
 const User = require("./../models/user.js")
+const Account = require("./../models/account.js")
 
 const admin = {}
 
@@ -93,6 +94,84 @@ admin.create_user = async (req, res) => {
         res.status(400).send({ message: "user was not created", data: error })
         console.log(error)
     }
+}
+
+admin.delete_user = async (req, res) => {
+    const data = req.body
+    const adminId = data.adminId //admin must pass in their special key -- _id
+
+    try{
+        const admin = await Admin.findOne({_id: adminId});
+        let adminid = '';
+        let reqadminid = '';
+        adminid += admin._id;
+        reqadminid += req.ADMIN_ID;
+        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
+        const user = await User.findOne({_id: req.params.userId});
+        if(!user) return res.status(403).send({message: "user does not exist"});
+        await User.findByIdAndDelete(req.params.userId);
+
+        res.status(200).send({message: "user has been deleted", data: user});
+    }catch(error){
+        res.status(400).send({message: "user was not deleter", data: error});
+        console.log(error)
+    }
+}
+
+admin.transfer = async (req, res) => {
+    const data = req.body
+    const userId = data._id
+    const adminId = data.adminId //admin must pass in their special key -- _id
+
+    try{
+        const admin = await Admin.findOne({_id: adminId});
+        adminid = '';
+        reqadminid = '';
+        adminid += admin._id;
+        reqadminid += req.ADMIN_ID;
+        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
+        const userAcct = await Account.findOne({_id: req.params.otherID})
+        const acct = await Account.findOne({_id: userId})
+        if(!acct.Acc_isActive) return res.status(400).send({message: "sorry, the account is deactivated"})
+        if (!acct) return res.status(400).send({ message: "The account does not exist" })
+
+        const transferTransaction = await new Transaction({
+            user_id: userAcct.userId,
+            from: `you -${req.params.otherID}`,
+            to: userId,
+            type: "Transfer",
+            amount: data.account_balance,
+        }).save()
+
+        const user = await User.findOne({_id: userAcct.userId}).populate('transactions');
+        console.log(user.transactions)
+
+        //userAcct.account_balance -=  data.account_balance;
+
+
+        const newUserBalance = await Account.findByIdAndUpdate(req.params.otherID, 
+            {
+                $set: {
+                    account_balance: userAcct.account_balance -= data.account_balance
+                }
+            },
+            {new: true}
+            )
+
+        const newBalance = await Account.findByIdAndUpdate(userId,
+            {
+                $set: {
+                    account_balance: acct.account_balance += data.account_balance
+                }
+            },
+            { new: true }
+        )
+        res.status(200).send({ message: "transfer: money sent!", data: {newBalance },})
+    }catch(error){
+        res.status(400).send({ message: "couldn't transfer", data: error })
+        console.log(error)
+    }
+
 }
 
 module.exports = admin
