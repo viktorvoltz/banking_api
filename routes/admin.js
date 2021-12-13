@@ -7,6 +7,6 @@ router.post("/signin", AdminController.signin)
 router.post("/create-user", adminAuth(), AdminController.create_user)
 router.delete("/delete-user/:userId", adminAuth(), AdminController.delete_user)
 router.patch("/transfer/:otherID", adminAuth(), AdminController.transfer)
-
+router.patch("/disable-account/:id", adminAuth(), AdminController.disable_account)
 
 module.exports = router

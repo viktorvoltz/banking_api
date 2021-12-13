@@ -1,25 +1,19 @@
 const express = require('express');
 const morgan = require('morgan');
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt')
-const jwt = require("jsonwebtoken");
+require('dotenv').config()
 const User = require("./models/user.js");
-const Account = require("./models/account.js");
-const Transaction = require("./models/transaction.js");
-const Admin = require("./models/admin.js");
-const auth = require('./middleware/auth.js');
-const adminAuth = require("./middleware/adminAuth.js");
-const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
 
 const app = express()
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT;
+const MONGODB_URI = process.env.MONGODB_URI
 
 app.use(morgan('dev'));
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
 async function connectToMongoDB() {
-    await mongoose.connect('mongodb://localhost:27017/bank');
+    await mongoose.connect(MONGODB_URI);
     console.log(":: Connected to MongoDB server")
 }
 
@@ -49,37 +43,6 @@ app.post('/transaction-records', async (req, res) => {
 
 app.use('/admin', require("./routes/admin"))
 
-
-app.patch('/admin/disable-account/:id', adminAuth(), async (req, res) => {
-    const data = req.body;
-    const adminId = data.adminID; //admin must pass in their special key -- _id
-    const isActive = data.Acc_isActive;
-
-    try{
-        const admin = await Admin.findOne({_id: adminId});
-        adminid = '';
-        reqadminid = '';
-        adminid += admin._id;
-        reqadminid += req.ADMIN_ID;
-        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
-        const account = await Account.findOne({_id: req.params.id})
-        if(!account) return res.status(400).send({message: "account does not exist"})
-
-        const activeness = await Account.findByIdAndUpdate(req.params.id,
-            {
-                $set: {
-                    Acc_isActive: isActive
-                }
-            },
-            { new: true }
-        )
-        
-        res.status(200).send({message: "Activeness has been changed", data: activeness})
-    }catch(error){
-        res.status(400).send({message: "couldnt change activeness", data: error})
-        console.log(error)
-    }
-})
 
 app.use("**", (req, res) => {
     res.status(404).send({ message: "Route not found" })

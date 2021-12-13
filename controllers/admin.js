@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
-const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
+const JWT_SECRETKEY = process.env.JWT_SECRETKEY;
 const Admin = require("./../models/admin.js")
 const Transaction = require("./../models/transaction.js")
 const User = require("./../models/user.js")
@@ -125,8 +125,8 @@ admin.transfer = async (req, res) => {
 
     try{
         const admin = await Admin.findOne({_id: adminId});
-        adminid = '';
-        reqadminid = '';
+        let adminid = '';
+        let reqadminid = '';
         adminid += admin._id;
         reqadminid += req.ADMIN_ID;
         if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
@@ -172,6 +172,37 @@ admin.transfer = async (req, res) => {
         console.log(error)
     }
 
+}
+
+admin.disable_account = async (req, res) => {
+    const data = req.body;
+    const adminId = data.adminId; //admin must pass in their special key -- _id
+    const isActive = data.Acc_isActive;
+
+    try{
+        const admin = await Admin.findOne({_id: adminId});
+        let adminid = '';
+        let reqadminid = '';
+        adminid += admin._id;
+        reqadminid += req.ADMIN_ID;
+        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
+        const account = await Account.findOne({_id: req.params.id})
+        if(!account) return res.status(400).send({message: "account does not exist"})
+
+        const activeness = await Account.findByIdAndUpdate(req.params.id,
+            {
+                $set: {
+                    Acc_isActive: isActive
+                }
+            },
+            { new: true }
+        )
+        
+        res.status(200).send({message: "Activeness has been changed", data: activeness})
+    }catch(error){
+        res.status(400).send({message: "couldnt change activeness", data: error})
+        console.log(error)
+    }
 }
 
 module.exports = admin
