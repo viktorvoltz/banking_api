@@ -5,7 +5,7 @@ const AccountController = require("./../controllers/account.js")
 router.post("/create", auth(), AccountController.create)
 router.patch("/deposit/:_id", auth(), AccountController.deposit)
 router.patch("/withdraw/:_id", auth(), AccountController.withdraw)
-
+router.patch("/transfer/:otherID", auth(), AccountController.transfer)
 
 
 module.exports = router
