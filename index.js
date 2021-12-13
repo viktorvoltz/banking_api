@@ -187,14 +187,19 @@ app.patch('/account/withdraw/:_id', auth(), async (req, res) => {
     }
 })
 
-app.patch('/account/transfer/:otherID', async (req, res) => {
+app.patch('/account/transfer/:otherID', auth(), async (req, res) => {
     const data = req.body
     const userId = data._id
 
     try{
         const userAcct = await Account.findOne({_id: req.params.otherID})
+        acctuserid = '';   //for some reason javascript wouldn't check two alphanumeric, so i had to stringify my token and id
+        requserid = '';
+        acctuserid += userAcct.userId;
+        requserid += req.USER_ID;
+        if (acctuserid != requserid) return res.status(403).send({ message: "You can't transfer from this account" });
         const acct = await Account.findOne({_id: userId})
-        if(!acct.Acc_isActive) return res.status(400).send({message: "soryy, the account is deactivated"})
+        if(!acct.Acc_isActive) return res.status(400).send({message: "sorry, the account is deactivated"})
         if (!acct) return res.status(400).send({ message: "The account does not exist" })
 
         const transferTransaction = await new Transaction({
@@ -238,7 +243,7 @@ app.patch('/account/transfer/:otherID', async (req, res) => {
 
 app.post('/transaction-records', async (req, res) => {
     const data = req.body
-    const userId = data._id
+    const userId = data.userId
 
     try{
         const user = await User.findOne({_id: userId}).populate('transactions');
