@@ -50,42 +50,6 @@ app.post('/transaction-records', async (req, res) => {
 app.use('/admin', require("./routes/admin"))
 
 
-app.post('/admin/create-user', adminAuth(), async (req, res) => {
-    const data = req.body
-    const adminId = data.adminId //admin must pass in their special key -- _id
-
-    try {
-        const admin = await Admin.findOne({_id: adminId});
-        adminid = '';
-        reqadminid = '';
-        adminid += admin._id;
-        reqadminid += req.ADMIN_ID;
-        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
-        const hashedPassword = await bcrypt.hash(data.password, 10)
-        const user = await new User({
-            email: data.email,
-            password: hashedPassword,
-            full_name: data.full_name,
-            isAdmin: false
-        }).save()
-
-        const token = jwt.sign({ userId: user._id, }, JWT_SECRETKEY)
-
-        res.status(201).send({
-            message: "created user successfully",
-            data: {
-                token,
-                email: user.email,
-                full_name: user.full_name,
-                user_id: user._id,
-            }
-        })
-    } catch (error) {
-        res.status(400).send({ message: "user was not created", data: error })
-        console.log(error)
-    }
-})
-
 app.delete('/admin/delete-user/:userId', adminAuth(), async (req, res) => {
     const data = req.body
     const adminId = data.adminId //admin must pass in their special key -- _id
