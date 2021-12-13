@@ -29,62 +29,7 @@ app.get('/ping', (req, res) => {
 
 app.use("/auth", require("./routes/auth"))
 
-/*app.post('/auth/signin', async(req, res) => {
-    const data = req.body
-
-    try {
-        const user = await User.findOne({ email: data.email })
-        if (!user) return res.status(400).send({ message: "Invalid email or password" })
-        const isValidPassword = await bcrypt.compare(data.password, user.password)
-        if (!isValidPassword) return res.status(400).send({ message: "Invalid email or password" })
-    
-        const token = jwt.sign({ userId: user._id }, JWT_SECRETKEY)
-    
-        res.status(200).send({
-          message: "Login successful",
-          data: {
-            token,
-            userId: user._id,
-            email: user.email,
-            full_name: user.full_name
-          }
-        })
-      } catch (error) {
-        console.log(error)
-        res.status(400).send({ message: "Unable to Login", error })
-      }
-})*/
-
-app.post('/account/create', auth(), async (req, res) => {
-
-    const generateRandomString = (stringLength) => {
-        //stringLength = 10;
-        var possibleCharacters = 'abcdefghijklmnopqrstuvwxyz';
-        var str = '';
-        for (i = 0; i < stringLength; i++) {
-            var randomChar = possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
-            str += randomChar;
-        }
-        return str;
-    }
-    const data = req.body
-
-    try {
-        const account = await new Account({
-            userId: req.USER_ID,
-            account_number: generateRandomString(10),
-            account_name: data.account_name,
-            account_pin: data.account_pin,
-            account_balance: 0,
-            Acc_isActive: true
-        }).save()
-
-        res.status(201).send({ message: "acount created", data: account })
-    } catch (error) {
-        res.status(400).send({ message: "account not created", data: error })
-    }
-
-})
+app.use("/account", require("./routes/account"))
 
 app.patch('/account/deposit/:_id', auth(), async (req, res) => {
     const data = req.body
