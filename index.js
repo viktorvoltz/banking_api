@@ -27,36 +27,9 @@ app.get('/ping', (req, res) => {
     res.status(200).send("hello world!");
 })
 
-/*app.post('/auth/signup', async (req, res) => {
-    const data = req.body
+app.use("/auth", require("./routes/auth"))
 
-    try {
-        const hashedPassword = await bcrypt.hash(data.password, 10)
-        const user = await new User({
-            email: data.email,
-            password: hashedPassword,
-            full_name: data.full_name,
-            isAdmin: false
-        }).save()
-
-        const token = jwt.sign({ userId: user._id, }, JWT_SECRETKEY)
-
-        res.status(201).send({
-            message: "created user successfully",
-            data: {
-                token,
-                email: user.email,
-                full_name: user.full_name,
-                userId: user._id,
-            }
-        })
-    } catch (error) {
-        res.status(400).send({ message: "user was not created", data: error })
-        console.log(error)
-    }
-})*/
-
-app.post('/auth/signin', async(req, res) => {
+/*app.post('/auth/signin', async(req, res) => {
     const data = req.body
 
     try {
@@ -80,7 +53,7 @@ app.post('/auth/signin', async(req, res) => {
         console.log(error)
         res.status(400).send({ message: "Unable to Login", error })
       }
-})
+})*/
 
 app.post('/account/create', auth(), async (req, res) => {
 
