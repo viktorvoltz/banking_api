@@ -8,6 +8,7 @@ const Account = require("./models/account.js");
 const Transaction = require("./models/transaction.js");
 const Admin = require("./models/admin.js");
 const auth = require('./middleware/auth.js');
+const adminAuth = require("./middleware/adminAuth.js");
 const JWT_SECRETKEY = "jhvcjhdbvjbadjkfbvjhdjbhjhjbjkbjhbhj";
 
 const app = express()
@@ -308,10 +309,17 @@ app.post('/admin/signin', async (req, res) => {
       }
 })
 
-app.post('/admin/create-user', async (req, res) => {
+app.post('/admin/create-user', adminAuth(), async (req, res) => {
     const data = req.body
+    const adminId = data.adminId //admin must pass in their special key -- _id
 
     try {
+        const admin = await Admin.findOne({_id: adminId});
+        adminid = '';
+        requserid = '';
+        adminid += admin._id;
+        requserid += req.ADMIN_ID;
+        if(adminid != adminid) return res.status(403).send({message: "you are not ADMIN"})
         const hashedPassword = await bcrypt.hash(data.password, 10)
         const user = await new User({
             email: data.email,
@@ -320,7 +328,7 @@ app.post('/admin/create-user', async (req, res) => {
             isAdmin: false
         }).save()
 
-        const token = jwt.sign({ user_id: user._id, }, JWT_SECRETKEY)
+        const token = jwt.sign({ userId: user._id, }, JWT_SECRETKEY)
 
         res.status(201).send({
             message: "created user successfully",
