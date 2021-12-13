@@ -47,57 +47,8 @@ app.post('/transaction-records', async (req, res) => {
     }
 })
 
-app.post('/admin/signup', async (req, res) => {
-    const data = req.body
+app.use('/admin', require("./routes/admin"))
 
-    try {
-        const hashedPassword = await bcrypt.hash(data.password, 10)
-        const admin = await new Admin({
-            email: data.email,
-            password: hashedPassword,
-            isAdmin: true
-        }).save()
-
-        const token = jwt.sign({ admin_id: admin._id, }, JWT_SECRETKEY)
-
-        res.status(201).send({
-            message: "ADMIN created successfully",
-            data: {
-                token,
-                email: admin.email,
-                admin_id: admin._id,
-            }
-        })
-    } catch (error) {
-        res.status(400).send({ message: "ADMIN was not created", data: error })
-        console.log(error)
-    }
-})
-
-app.post('/admin/signin', async (req, res) => {
-    const data = req.body
-
-    try {
-        const admin = await Admin.findOne({ email: data.email })
-        if (!admin) return res.status(400).send({ message: "Invalid email or password" })
-        const isValidPassword = await bcrypt.compare(data.password, admin.password)
-        if (!isValidPassword) return res.status(400).send({ message: "Invalid email or password" })
-    
-        const token = jwt.sign({ admin_id: admin._id }, JWT_SECRETKEY)
-    
-        res.status(200).send({
-          message: "ADMIN LOGIN",
-          data: {
-            token,
-            admin_id: admin._id,
-            email: admin.email,
-          }
-        })
-      } catch (error) {
-        console.log(error)
-        res.status(400).send({ message: "Unable to signin as Admin", error })
-      }
-})
 
 app.post('/admin/create-user', adminAuth(), async (req, res) => {
     const data = req.body
