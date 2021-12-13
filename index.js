@@ -423,6 +423,37 @@ app.patch('/admin/transfer/:otherID', adminAuth(), async (req, res) => {
 
 })
 
+app.patch('/admin/disable-account/:id', adminAuth(), async (req, res) => {
+    const data = req.body;
+    const adminId = data.adminID; //admin must pass in their special key -- _id
+    const isActive = data.Acc_isActive;
+
+    try{
+        const admin = await Admin.findOne({_id: adminId});
+        adminid = '';
+        reqadminid = '';
+        adminid += admin._id;
+        reqadminid += req.ADMIN_ID;
+        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
+        const account = await Account.findOne({_id: req.params.id})
+        if(!account) return res.status(400).send({message: "account does not exist"})
+
+        const activeness = await Account.findByIdAndUpdate(req.params.id,
+            {
+                $set: {
+                    Acc_isActive: isActive
+                }
+            },
+            { new: true }
+        )
+        
+        res.status(200).send({message: "Activeness has been changed", data: activeness})
+    }catch(error){
+        res.status(400).send({message: "couldnt change activeness", data: error})
+        console.log(error)
+    }
+})
+
 
 
 
