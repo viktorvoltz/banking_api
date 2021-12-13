@@ -74,4 +74,40 @@ account.deposit = async (req, res) => {
     }
 }
 
+account.withdraw = async (req, res) => {
+    const data = req.body
+
+    try {
+        const acct = await Account.findOne({_id: req.params._id})
+        acctuserid = '';   //for some reason javascript wouldn't check two alphanumeric, so i had to stringify my token and id
+        requserid = '';
+        acctuserid += acct.userId;
+        requserid += req.USER_ID;
+        if (acctuserid != requserid) return res.status(403).send({ message: "You can't withdraw from this account" });
+        if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
+        if (!acct) return res.status(400).send({ message: "user account does not exist" })
+
+        const withdrawTransaction = await new Transaction({
+            user_id: acct.userId,
+            type: "Withdraw",
+            amount: data.account_balance,
+        }).save()
+
+        const user = await User.findOne({_id: acct.userId}).populate('transactions');
+        console.log(user.transactions)
+
+        const newBalance = await Account.findByIdAndUpdate(req.params._id,
+            {
+                $set: {
+                    account_balance: acct.account_balance -= data.account_balance
+                }
+            },
+            { new: true }
+        )
+        res.status(200).send({ message: "debit: money withdrawn", data: {newBalance, user}})
+    } catch (error) {
+        res.status(400).send({ message: "couldn't deposit", error })
+    }
+}
+
 module.exports = account
