@@ -454,6 +454,14 @@ app.patch('/admin/disable-account/:id', adminAuth(), async (req, res) => {
     }
 })
 
+app.use("**", (req, res) => {
+    res.status(404).send({ message: "Route not found" })
+  })
+  
+  app.use((error, req, res, next) => {
+    console.log(error)
+    res.status(500).send({ message: "Something went wrong", error: error.message })
+  })
 
 
 
