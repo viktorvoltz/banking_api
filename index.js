@@ -27,7 +27,7 @@ app.get('/ping', (req, res) => {
     res.status(200).send("hello world!");
 })
 
-app.post('/auth/signup', async (req, res) => {
+/*app.post('/auth/signup', async (req, res) => {
     const data = req.body
 
     try {
@@ -54,7 +54,7 @@ app.post('/auth/signup', async (req, res) => {
         res.status(400).send({ message: "user was not created", data: error })
         console.log(error)
     }
-})
+})*/
 
 app.post('/auth/signin', async(req, res) => {
     const data = req.body
@@ -316,10 +316,10 @@ app.post('/admin/create-user', adminAuth(), async (req, res) => {
     try {
         const admin = await Admin.findOne({_id: adminId});
         adminid = '';
-        requserid = '';
+        reqadminid = '';
         adminid += admin._id;
-        requserid += req.ADMIN_ID;
-        if(adminid != adminid) return res.status(403).send({message: "you are not ADMIN"})
+        reqadminid += req.ADMIN_ID;
+        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
         const hashedPassword = await bcrypt.hash(data.password, 10)
         const user = await new User({
             email: data.email,
@@ -345,10 +345,17 @@ app.post('/admin/create-user', adminAuth(), async (req, res) => {
     }
 })
 
-app.delete('/admin/delete-user/:userId', async (req, res) => {
-    //data = req.body
+app.delete('/admin/delete-user/:userId', adminAuth(), async (req, res) => {
+    const data = req.body
+    const adminId = data.adminId //admin must pass in their special key -- _id
 
     try{
+        const admin = await Admin.findOne({_id: adminId});
+        adminid = '';
+        reqadminid = '';
+        adminid += admin._id;
+        reqadminid += req.ADMIN_ID;
+        if(adminid != reqadminid) return res.status(403).send({message: "you are not ADMIN"})
         const user = await User.findOne({_id: req.params.userId});
         if(!user) return res.status(403).send({message: "user does not exist"});
         await User.findByIdAndDelete(req.params.userId);
