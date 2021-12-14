@@ -13,6 +13,21 @@ setup a .env file and initialize PORT, MONGODB_URI, JWT_SECRETKEY
 
 npm start
 
+## features
+
+USERS CAN;
+Login
+Deposit
+Withdraw
+Transfer to other users
+See transaction record
+
+ADMIN CAN;
+Add users
+Delete users
+Reverse transaction
+Disable a user account
+
 ## endpoints
 to test connection to network and database.
 
@@ -52,6 +67,7 @@ POST: http://localhost:PORT/transaction-records
 for admin signup and signin, admin provides email and password.
 
 POST: http://localhost:PORT/admin/signup
+
 POST: http://localhost:PORT/admin/signin
 
 *ONLY and admin can create a user. to create a user, admin enters personal secret id, then email, password, fullname for the user.
