@@ -8,7 +8,7 @@ account.create = async (req, res) => {
 
     const generateRandomString = (stringLength) => {
         //stringLength = 10;
-        var possibleCharacters = 'abcdefghijklmnopqrstuvwxyz';
+        var possibleCharacters = '0123456789';
         var str = '';
         for (i = 0; i < stringLength; i++) {
             var randomChar = possibleCharacters.charAt(Math.floor(Math.random() * possibleCharacters.length));
@@ -21,7 +21,7 @@ account.create = async (req, res) => {
     try {
         const account = await new Account({
             userId: req.USER_ID,
-            account_number: generateRandomString(10),
+            account_number: generateRandomString(11),
             account_name: data.account_name,
             account_pin: data.account_pin,
             account_balance: 0,
@@ -86,6 +86,7 @@ account.withdraw = async (req, res) => {
         if (acctuserid != requserid) return res.status(403).send({ message: "You can't withdraw from this account" });
         if(!acct.Acc_isActive) return res.status(400).send({message: "account is deactivated"})
         if (!acct) return res.status(400).send({ message: "user account does not exist" })
+        if (data.account_balance > acct.account_balance) return res.status(400).send({message: "insuffucient funds"});
 
         const withdrawTransaction = await new Transaction({
             user_id: acct.userId,
@@ -124,6 +125,7 @@ account.transfer = async (req, res) => {
         const acct = await Account.findOne({_id: userId})
         if(!acct.Acc_isActive) return res.status(400).send({message: "sorry, the account is deactivated"})
         if (!acct) return res.status(400).send({ message: "The account does not exist" })
+        if (data.account_balance > userAcct.account_balance) return res.status(400).send({message: "insufficient funds"})
 
         const transferTransaction = await new Transaction({
             user_id: userAcct.userId,

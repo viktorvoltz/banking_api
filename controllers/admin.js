@@ -134,6 +134,7 @@ admin.transfer = async (req, res) => {
         const acct = await Account.findOne({_id: userId})
         if(!acct.Acc_isActive) return res.status(400).send({message: "sorry, the account is deactivated"})
         if (!acct) return res.status(400).send({ message: "The account does not exist" })
+        if (data.account_balance > userAcct.account_balance) return res.status(400).send({message: "insufficient funds"})
 
         const transferTransaction = await new Transaction({
             user_id: userAcct.userId,
