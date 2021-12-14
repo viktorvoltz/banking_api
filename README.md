@@ -16,17 +16,17 @@ npm start
 ## features
 
 USERS CAN;
-Login
-Deposit
-Withdraw
-Transfer to other users
-See transaction record
+Login,
+Deposit,
+Withdraw,
+Transfer to other users,
+See transaction record.
 
 ADMIN CAN;
-Add users
-Delete users
-Reverse transaction
-Disable a user account
+Add users,
+Delete users,
+Reverse transactions,
+Disable a user account.
 
 ## endpoints
 to test connection to network and database.
